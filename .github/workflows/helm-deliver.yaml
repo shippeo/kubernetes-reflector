@@ -1,0 +1,52 @@
+---
+name: Build & Push async-workers chart
+on:
+  push:
+    branches:
+      - shippeo
+
+jobs:
+  deliver-charts:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        chart:
+          - reflector
+    outputs:
+      modified_files: ${{ steps.changed-files-specific.outputs.modified_files }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Get specific changed files
+        id: changed-files-specific
+        uses: tj-actions/changed-files@v13
+        with:
+          files: |
+            ./src/helm/${{ matrix.chart }}/*
+
+      - name: change-in-the-matrix
+        id: change-in-the-matrix
+        run: |
+          for file in ${{ steps.changed-files-specific.outputs.modified_files }}; do
+            if echo ${{ steps.changed-files-specific.outputs.modified_files }}|grep ${{ matrix.chart }} >/dev/null; then
+              echo "CHANGE_IN_THE_MATRIX=${{ matrix.chart }}"
+              echo "CHANGE_IN_THE_MATRIX=${{ matrix.chart }}" >> $GITHUB_ENV
+              exit 0
+            fi
+          done
+
+      - uses: shippeo/helm-push-action@v3
+        env:
+          SOURCE_DIR: './src/helm'
+          CHART_FOLDER: '${{ matrix.chart }}'
+          FORCE: 'True'
+          CHARTMUSEUM_URL: '${{ secrets.CHARTMUSEUM_URL_STABLE }}'
+          CHARTMUSEUM_URL_UNSTABLE: '${{ secrets.CHARTMUSEUM_URL_CI }}'
+          CHARTMUSEUM_USER: '${{ secrets.CHARTMUSEUM_USER }}'
+          CHARTMUSEUM_PASSWORD: '${{ secrets.CHARTMUSEUM_PASSWORD }}'
+          CHARTMUSEUM_REPO_NAME: '${{ secrets.CHARTMUSEUM_REPO_NAME }}'
+          GIT_BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+          GIT_STABLE_BRANCH_NAME: "master"
+        if: ${{ env.CHANGE_IN_THE_MATRIX == matrix.chart }}

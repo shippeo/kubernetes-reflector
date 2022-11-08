@@ -48,5 +48,5 @@ jobs:
           CHARTMUSEUM_PASSWORD: '${{ secrets.CHARTMUSEUM_PASSWORD }}'
           CHARTMUSEUM_REPO_NAME: '${{ secrets.CHARTMUSEUM_REPO_NAME }}'
           GIT_BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-          GIT_STABLE_BRANCH_NAME: "master"
+          GIT_STABLE_BRANCH_NAME: "shippeo"
         if: ${{ env.CHANGE_IN_THE_MATRIX == matrix.chart }}
